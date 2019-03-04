@@ -1,0 +1,9 @@
+*
+!/**/
+!*.*
+*.o
+*.out
+!Makefile
+!.gitignore
+.DS_Store
+.dSYM
