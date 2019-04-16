@@ -35,37 +35,46 @@ int main(int argc, char *argv[]){
                 dims[i] = dim;
         }
 
-
+        printf("Rank %d ", rank_topology);
         MPI_Dims_create(nnodes, ndims, dims);
         MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periods, reorder, &topologyComm);
         if (rank_topology < nnodes) {
                 MPI_Cart_sub(topologyComm, remainsRow, &rowComm);
                 MPI_Cart_sub(topologyComm, remainsCol, &colComm);
                 MPI_Cart_coords(topologyComm, rank_topology, maxdims, coords);
-                printf("Rank %d has coordinates (%d,%d) holds value A=%d, B=%d in topologyComm\n", rank_topology, coords[0], coords[1],a,b);
+                printf("has coordinates (%d,%d) holds value A=%d, B=%d in topologyComm\n", coords[0], coords[1],a,b);
 
-                int a_temp, root, src, dest, b_temp = b;
+                int a_temp, root, srcA, destA, srcB, destB, b_temp, a_temp2, b_temp2;
                 MPI_Comm_rank(rowComm, &rank_row_comm);
 
+                // Preskewing
+                MPI_Cart_shift(rowComm, 0, -1*coords[0], &srcA, &destA);
+                MPI_Cart_shift(colComm, 0, -1*coords[1], &srcB, &destB);
+                MPI_Sendrecv(&a, 1, MPI_INT,destA, 95, &a_temp, 1, MPI_INT, srcA, 95, rowComm,&status);
+                MPI_Sendrecv(&b, 1, MPI_INT,destB, 95, &b_temp, 1, MPI_INT, srcB, 95, colComm,&status);
+                MPI_Barrier(rowComm);
+                MPI_Barrier(colComm);
+                //printf("\tRank %d: A=%d B=%d\n", rank_topology, a_temp, b_temp);
+                // sleep(2);
                 // Loop for n stages
                 for (int stage = 0; stage < dim; stage++) {
-                        a_temp = a;
-                        b_temp = b;
-
-                        // Broadcasting A
-                        root = (coords[0] + stage) % dim;
-                        MPI_Bcast(&a_temp,1,MPI_INT,root,rowComm);
-
                         // Local Computation
                         c = c + (a_temp * b_temp);
 
-                        // Shifting B
-                        MPI_Cart_shift(colComm, 0, -1, &src, &dest);
-                        MPI_Sendrecv(&b_temp, 1, MPI_INT,dest, 95, &b, 1, MPI_INT, src, 95, colComm,&status);
+                        // Shifting
+                        MPI_Cart_shift(rowComm, 0, -1, &srcA, &destA);
+                        MPI_Cart_shift(colComm, 0, -1, &srcB, &destB);
+                        MPI_Sendrecv(&a_temp, 1, MPI_INT, destA, 95, &a_temp2, 1, MPI_INT, srcA, 95, rowComm, &status);
+                        MPI_Sendrecv(&b_temp, 1, MPI_INT, destB, 95, &b_temp2, 1, MPI_INT, srcB, 95, colComm, &status);
+                        MPI_Barrier(rowComm);
                         MPI_Barrier(colComm);
 
-                        printf("\tStage %d Rank %d Root %d: A=%d B=%d\n", stage, rank_topology, root, a_temp, b_temp);
+                        a_temp = a_temp2;
+                        b_temp = b_temp2;
                 }
+
+                // Postskewing
+                printf("Rank %d : A=%d - B=%d ", rank_topology,a,b);
                 printf("Rank %d has c = %d\n", rank_topology,c);
         } else {
                 printf("\n");
