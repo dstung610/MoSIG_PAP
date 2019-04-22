@@ -7,7 +7,7 @@
 
 #define ndims 2
 
-// Fox Algorithm Matrix Multiplication
+// Cannon Algorithm Matrix Multiplication
 int main(int argc, char *argv[]){
         int rank_topology, rank_col_comm, rank_row_comm, size;
         int reorder = 0;
@@ -58,10 +58,10 @@ int main(int argc, char *argv[]){
                 MPI_Barrier(colComm);
                 //printf("\tRank %d: A=%d B=%d\n", rank_topology, a_temp, b_temp);
                 // sleep(2);
+
                 // Loop for n stages
                 for (int stage = 0; stage < dim; stage++) {
                         // Local Computation
-
                         c = c + (a_temp * b_temp);
 
                         // Shifting
@@ -74,8 +74,6 @@ int main(int argc, char *argv[]){
 
                         a = a_temp;
                         b = b_temp;
-                        // a_temp = a_temp2;
-                        // b_temp = b_temp2;
                 }
 
                 // Postskewing

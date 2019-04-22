@@ -64,7 +64,7 @@ int main(int argc, char *argv[]){
                         MPI_Sendrecv(&b_temp, 1, MPI_INT,dest, 95, &b, 1, MPI_INT, src, 95, colComm,&status);
                         MPI_Barrier(colComm);
 
-                        printf("\tStage %d Rank %d Root %d: A=%d B=%d\n", stage, rank_topology, root, a_temp, b_temp);
+                        //printf("\tStage %d Rank %d Root %d: A=%d B=%d\n", stage, rank_topology, root, a_temp, b_temp);
                 }
                 printf("Rank %d has c = %d\n", rank_topology,c);
         } else {
